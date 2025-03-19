@@ -4,6 +4,7 @@ PASSRC=${PASSRC:-"$HOME/.passrc"}
 PASS_STORE=${PASS_STORE:-"$HOME/.pass/"}
 
 OTP_STORE="$PASS_STORE/otp/"
+RECUVA_STORE="$PASS_STORE/recovery/"
 
 if [[ "$PASS_STORE" != "$HOME"* ]]; then
   echo "Danger! PASS_STORE is not located within the home directory!"
@@ -153,7 +154,7 @@ function generate_otp() {
   fi
 }
 
-function edit_password() {
+function edit_otp() {
   local tmp_file PASSWORD STORE PASS_OPERATION
   PASS_OPERATION="$2"
   STORE=${1:-"$PASSWORD_STORE"}
@@ -195,6 +196,60 @@ function edit_password() {
 
   git -C "$PASS_STORE" add . &&
     git -C "$PASS_STORE" commit -m "Edit $PASS_OPERATION $name"
+  chmod 600 "$PASSWORD"
+
+  if [ "$CLIP_POST_ACTION" = "true" ]; then
+    copy_otp
+  fi
+}
+
+function recuva() {
+  local tmp_file PASSWORD STORE PASS_OPERATION
+  STORE=${1:-"$RECUVA_STORE"}
+  PASSWORD="$STORE/$name.age"
+  tmp_file="$STORE/$name.tmp"
+  decrypted_file=$(mktemp --tmpdir="/run/user/$(id -u)/" tmp_pass.XXXXXX)
+
+  function edit_error() {
+    val=$?
+    if [ "$val" -ne 0 ]; then
+      mv "$tmp_file" "$PASSWORD"
+      srm "$decrypted_file"
+      echo "An error occurred!" >&2
+      return 1
+    fi
+  }
+
+  if [ ! -f "$PASSWORD" ]; then
+    [[ ! -d "$STORE" ]] && mkdir "$STORE"
+    cd "$STORE" || exit 1
+    mkdir -p "$(dirname "$name")"
+  else
+    get_age_key private
+
+    if [ -f "$tmp_file" ]; then
+      mv "$tmp_file" "$PASSWORD"
+    fi
+
+    mv "$STORE/$name.age" "$tmp_file" # safeguard original password
+
+    key=$(get_age_key_amp_get pass)
+    age --decrypt --identity <(echo "$key") "$tmp_file" >"$decrypted_file"
+    edit_error
+  fi
+
+  nano "$decrypted_file"
+  edit_error
+
+  get_age_key public
+
+  age --encrypt --recipient="$key" -o "$PASSWORD" "$decrypted_file"
+  edit_error
+
+  srm "$tmp_file" "$decrypted_file"
+
+  git -C "$PASS_STORE" add . &&
+    git -C "$PASS_STORE" commit -m "Edit recovery key: $name"
   chmod 600 "$PASSWORD"
 
   if [ "$CLIP_POST_ACTION" = "true" ]; then
@@ -309,7 +364,7 @@ function get_otp_args() {
     if [[ -z "$name" ]]; then
       fzf_passwords "$OTP_STORE"
     fi
-    edit_password "$OTP_STORE" OTP
+    edit_otp "$OTP_STORE" OTP
     exit 0
     ;;
   output | out | stdout)
@@ -338,6 +393,15 @@ function get_otp_args() {
     shift
     name=$1
     find_passwords "$OTP_STORE"
+    exit 0
+    ;;
+  recuva)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$RECUVA_STORE"
+    fi
+    recuva "$RECUVA_STORE"
     exit 0
     ;;
   version)
