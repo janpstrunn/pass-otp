@@ -76,11 +76,12 @@ function otp_import() {
     PASSWORD_STORE_DIR=${PASSWORD_STORE_DIR:-$HOME/.password-store/}
   fi
   if [ ! -d "$PASS_STORE" ]; then
-    echo "PASS_STORE not found!"
+    text "$RED" "Error: PASS_STORE not found!"
     exit 1
   fi
   if [ -z "$PASS_PUBKEY" ]; then
-    text "$RED" "Missing public age key!"
+    text "$RED" "Error: Missing public age key!"
+    exit 1
   fi
   cd "$PASSWORD_STORE_DIR" || exit 1
   find . -type f -name "*.gpg" | while IFS= read -r password_file; do
