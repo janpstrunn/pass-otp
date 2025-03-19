@@ -1,37 +1,28 @@
 <img src="https://git.disroot.org/janpstrunn/images/raw/branch/main/pass.png" align="right" height="100"/>
 <br>
 
-<h1 align="left">pass-otp: A modern CLI OTP manager</h1>
+# pass-otp: A modern CLI OTP manager
 
 `pass-otp` is a simple password manager for OTP passwords written in shell, mean to be used alongside [pass](https://github.com/janpstrunn/pass) which tries to replace the [passwordstore](https://www.passwordstore.org/) keeping its core philosophies.
 
-It's a CLI tool that tries to make the process of managing one time passwords (OTP) a breeze while keeping yourself secure with good security standards. [Aware some current potential security issues](#potential-security-issues).
+It's a CLI tool that tries to make the process of managing one time passwords (OTP) a breeze while keeping yourself secure with good security standards.
 
 ## Features
 
 - List all files in a tree format using `tree` or `eza`
 - Find files using `find` or `fd`
 - Interactive password selection using `fzf`
-- Import otp keys from passwordstore
-- Output otp to `stdout`
-- Run any `git` command
-- Edit otp
-- Copy otp to clipboard and clear clipboard on specified time
+- Import OTP keys from [passwordstore](https://www.passwordstore.org/)
+- Output OTP to `stdout`
+- Copy OTP to clipboard and clear clipboard on specified time
+- Run post commands after clipboard clear
+- Use `zenity` to insert passwords
+- Specify a dialog tool to get master password and PIN
+- Edit OTP using `nano`
 
 ## Requirements
 
-- `age`
-- `git`
-- `srm`
-- `bash`, `zsh`, `fish` or any other shell
-- `oathtool`
-- `xclip` or `wl-clipboard`
-
-### Optional Requirements
-
-- `fzf`
-- `eza`
-- `fd`
+- [pass](https://github.com/janpstrunn/pass)
 
 ## Installation
 
@@ -42,42 +33,41 @@ chmod 700 src/pass
 mv src/pass "$HOME/.local/bin"
 ```
 
-## Configuration
-
-Environment Variables:
-
-- `PASS_STORE`: Password Directory. Default to `"$HOME/.pass/"`
-- `PASSRC`: Configuration file. Default to `"$HOME/.passrc`
-
-Configuration File:
-
-- `FORCE`: Always ignore confirmation dialogs
-- `CLIPHIST_WIPE`: Clears the cliphist database
-- `CLIPBOARD_CLEAR_TIME`: Time in seconds to clear the clipboard
-
 ## Usage
 
 ```
-Pass-OTP: OTP Password Manager
+pass-otp: A modern CLI OTP manager
 
 Usage: $0 [options] <command> [arguments]
 
 Options:
-  -c, --clip        Copy OTP to clipboard after generating or editing
-  -f, --force       Bypass confirmation dialogs
-  -h, --help        Display this help message and exit
-  -o                Print OTP to stdout
+
+  -a [-s] <salt> [-i] <iteration>
+  -c                          Copy password to clipboard after password creation
+  -d <zenity>                 Choose a dialog to get passwords
+  -e                          Extra command run post clipboard cleareance
+  -f                          Force. Bypass confirmation dialogs. May be destructive.
+  -h, --help                  Display this help message and exit
+  -n                          Enable notifications
+                              Use Entropy Amplification
+  -z                          Don't keep private key cached
 
 Commands:
-  clip <pass-name>         Copy OTP to clipboard
-  edit <pass-name>         Edit an existing OTP using nano
-  find <pass-name>         Search OTP entries and display as a tree
-  import                   Import OTP keys from password store
-  list, ls                 List all OTP files in a tree format
-  new, generate [-f -c] <pass-name> <OTPKEY>
-                           Generate a new OTP entry
+  add, new, gen, generate [-a -f -c -p] <pass-name> <OTP-length>
+                           Generate a new OTP
+  close                    Remove cached private key
+  cp, copy, clip [-a] <pass-name>
+                           Copy OTP to clipboard
+  custom <pass-cmd> <pin-cmd>
+                           Specify a custom dialog to get master OTP and PIN
+  edit <pass-name>         Edit OTP key using nano
+  find <pass-name>         Search OTPs and display as a tree
+  import                   Import OTPs from password store
+  ls, list                 List all stored OTPs in a tree format
+  out, output, stdout [-a] <pass-name>
+                           Print OTP to stdout
   rm, remove [-f] <pass-name>
-                           Remove an OTP entry
+                           Remove a OTP entry
   version                  Display the current version number
 
 Examples:
@@ -86,14 +76,12 @@ Examples:
   $0 list
 ```
 
-First time running `pass-otp`, requires to use setup your [pass](https://github.com/janpstrunn/pass) first.
+> [!IMPORTANT]
+> First time running `pass-otp`, requires to use setup your [pass](https://github.com/janpstrunn/pass) first.
 
-## Potential Security Issues
+## Notes
 
-- A non-encrypted format of keys are stored at `/run/user/$(id -u)` when accessing their private keys
-  - main.age is kept until session ends
-  - pass.age is kept until an command ends
-- Filenames and directories are kept non-encrypted, including git comments mentioning their names
+This script has been only tested in a Linux Machine.
 
 ## License
 
