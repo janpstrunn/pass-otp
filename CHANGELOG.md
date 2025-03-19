@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.2.0] 2025-03-19
+
+### Added
+
+- Notify if file does not have a OTP key
+- Notify when a file is removed
+- Default command to `usage` when no command is ran
+- Get `NOTIFY` and `CLIP_POST_ACTION` from `.passrc`
+
+### Changed
+
+- Notifications are shorter
+
 ## [2.1.1-1] 2025-03-19
 
 ### Added
