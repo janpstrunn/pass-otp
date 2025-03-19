@@ -3,9 +3,9 @@
 
 # pass-otp: A modern CLI OTP manager
 
-`pass-otp` is a simple password manager for OTP passwords written in shell, mean to be used alongside [pass](https://github.com/janpstrunn/pass) which tries to replace the [passwordstore](https://www.passwordstore.org/) keeping its core philosophies.
+`pass-otp` is a simple password manager for OTP passwords written in shell, meant to be used alongside [pass](https://github.com/janpstrunn/pass) which tries to replace the [passwordstore](https://www.passwordstore.org/) keeping its core philosophies.
 
-It's a CLI tool that tries to make the process of managing one time passwords (OTP) a breeze while keeping yourself secure with good security standards.
+It's a CLI tool that tries to make the process of managing one time passwords (OTP) and recovery keys a breeze while keeping yourself secure with good security standards.
 
 ## Features
 
@@ -30,8 +30,8 @@ It's a CLI tool that tries to make the process of managing one time passwords (O
 ```
 git clone https://github.com/janpstrunn/pass-otp
 cd pass-otp
-chmod 700 src/pass
-mv src/pass "$HOME/.local/bin"
+chmod 700 src/pass-otp
+mv src/pass-otp "$HOME/.local/bin"
 ```
 
 ## Usage
