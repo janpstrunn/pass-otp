@@ -75,6 +75,9 @@ function otp_import() {
     echo "PASS_STORE not found!"
     exit 1
   fi
+  if [ -z "$PASS_PUBKEY" ]; then
+    text "$RED" "Missing public age key!"
+  fi
   cd "$PASSWORD_STORE_DIR" || exit 1
   find . -type f -name "*.gpg" | while IFS= read -r password_file; do
     password_name=$(sed 's|^.\(.*\).gpg$|\1|' <<<"$password_file")
@@ -83,7 +86,7 @@ function otp_import() {
     { if (NF > 1) { split($2, a, "&"); print a[1] } else { exit 1 } }')
 
     if [ $? -ne 0 ]; then
-      echo "Error: $password_name does not have a OTP secret key!" >&2
+      text "$RED" "Error: $password_name does not have a OTP secret key!" >&2
       continue
     fi
 
@@ -95,11 +98,11 @@ function otp_import() {
     val=$?
 
     if [ $val -ne 0 ]; then
-      echo "Error encrypting password: $password_name" >&2
+      text "$RED" "Error encrypting password: $password_name" >&2
       continue
     fi
 
-    echo "Password $password_name encrypted successfully!"
+    text "$GREEN" "Password $password_name encrypted successfully!"
   done
   text "$RED" "Important note: Only the first line have been copied!"
   text "$RED" "If there were multiline passwords, they are not copied."
