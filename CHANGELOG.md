@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0] 2025-03-19
+
+### Added
+
+- Option to manage recovery keys using `nano`
+
 ## [2.0.0] 2025-03-19
 
 ### Changed
