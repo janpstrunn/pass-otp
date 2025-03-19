@@ -85,6 +85,9 @@ function otp_import() {
     text "$RED" "Error: PASS_STORE not found!"
     exit 1
   fi
+  if [ ! -d "$OTP_STORE" ]; then
+    mkdir "$OTP_STORE"
+  fi
   if [ -z "$PASS_PUBKEY" ]; then
     text "$RED" "Error: Missing public age key!"
     exit 1
@@ -119,6 +122,10 @@ function otp_import() {
   text "$RED" "If there were multiline passwords, they are not copied."
   git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Imported OTP secret keys from passwordstore"
   find "$OTP_STORE" -type f -exec chmod 600 {} +
+}
+
+function output_otp() {
+  age --decrypt --identity <(echo "$key") "$PASSWORD" | oathtool --totp --base32 -
 }
 
 function generate_otp() {
@@ -165,7 +172,7 @@ function generate_otp() {
   git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Add generated OTP for $name"
   chmod 600 "$PASSWORD"
   if [ "$CLIP_POST_ACTION" = "true" ]; then
-    copy_password
+    copy_otp
   fi
 }
 
@@ -268,24 +275,20 @@ function recuva() {
   chmod 600 "$PASSWORD"
 
   if [ "$CLIP_POST_ACTION" = "true" ]; then
-    copy_password
+    copy_otp
   fi
 }
 
 function copy_otp() {
-  copy_password
+  copy_password "$OTP_STORE"
   clip_otp
 }
 
 function clip_otp() {
-  if [ "$ENTROPY_AMPLIFICATION" = "true" ]; then
-    key=$(get_age_key_amp_get pass)
-    age --decrypt --identity <(echo "$key") "$STORE" | oathtool --totp --base32 - | $clip_command
-  else
-    key=$(get_age_key_amp_get pass)
-    age --decrypt --identity <(echo "$key") "$STORE" | oathtool --totp --base32 - | $clip_command
-  fi
-
+  local PASSWORD
+  PASSWORD="$OTP_STORE/$name.age"
+  key=$(get_age_key_amp_get pass)
+  age --decrypt --identity <(echo "$key") "$PASSWORD" | oathtool --totp --base32 - | $clip_command
   echo "Clearing the password from clipboard in $CLIPBOARD_CLEAR_TIME seconds..."
   if [ "$NOTIFY" = "true" ]; then
     notify-send -u normal "Pass: Copy" "Clearing the password in $CLIPBOARD_CLEAR_TIME seconds..."
@@ -389,6 +392,7 @@ function get_otp_args() {
       fzf_passwords "$OTP_STORE"
     fi
     output_password "$OTP_STORE"
+    output_otp
     exit 0
     ;;
   ls | list)
