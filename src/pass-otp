@@ -65,9 +65,9 @@ Commands:
   version                  Display the current version number
 
 Examples:
-  $0 new -c MyService ABCDEFGHIJKLMNOP
-  $0 clip MyService
-  $0 list
+  pass-otp new -c MyService ABCDEFGHIJKLMNOP
+  pass-otp clip MyService
+  pass-otp list
 EOF
 }
 
@@ -359,7 +359,7 @@ function get_otp_args() {
   shift $((OPTIND - 1))
 
   case "$1" in
-  -h | --help | usage)
+  help | usage)
     usage_otp
     exit 0
     ;;
