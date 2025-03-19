@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.1-1] 2025-03-19
+
+### Added
+
+- Check if `pass` is in the same directory
+
+### Fixed
+
+- Fix `otp-import` function not being called
+- Fix copying OTP to clipboard not working
+
 ## [2.1.1] 2025-03-19
 
 ### Added
