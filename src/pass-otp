@@ -19,7 +19,13 @@ if ! command -v oathtool &>/dev/null; then
 fi
 
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-source "$SCRIPT_DIR/pass"
+if [ ! -f "$SCRIPT_DIR/pass" ]; then
+  echo "Error: Missing dependencies"
+  echo "pass is not installed"
+  exit 1
+else
+  source "$SCRIPT_DIR/pass"
+fi
 
 function usage_otp() {
   cat <<EOF
@@ -418,7 +424,7 @@ function get_otp_args() {
     exit 0
     ;;
   import)
-    pass_import
+    otp_import
     exit 0
     ;;
   esac
