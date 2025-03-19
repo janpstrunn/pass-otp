@@ -220,6 +220,9 @@ function edit_otp() {
     git -C "$PASS_STORE" commit -m "Edit $PASS_OPERATION $name"
   chmod 600 "$PASSWORD"
 
+  if [ "$NOTIFY" = "true" ]; then
+    notify-send -u normal "Pass: Edit" "Edit $PASS_OPERATION $name"
+  fi
   if [ "$CLIP_POST_ACTION" = "true" ]; then
     copy_otp
   fi
@@ -274,6 +277,9 @@ function recuva() {
     git -C "$PASS_STORE" commit -m "Edit recovery key: $name"
   chmod 600 "$PASSWORD"
 
+  if [ "$NOTIFY" = "true" ]; then
+    notify-send -u normal "Pass: Edit" "Edit recovery key: $name"
+  fi
   if [ "$CLIP_POST_ACTION" = "true" ]; then
     copy_otp
   fi
@@ -413,7 +419,7 @@ function get_otp_args() {
     if [[ -z "$name" ]]; then
       fzf_passwords "$OTP_STORE"
     fi
-    remove_password "$OTP_STORE"
+    remove_password "$OTP_STORE" OTP
     exit 0
     ;;
   find)
