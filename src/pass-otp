@@ -349,7 +349,7 @@ function get_otp_args() {
       KEEP_PASS=false
       ;;
     ?)
-      echo "Error: Invalid option '-$OPTARG'" >&2
+      text "$RED" "Error: Invalid option '-$OPTARG'" >&2
       usage_otp
       exit 0
       ;;
@@ -443,6 +443,11 @@ function get_otp_args() {
     ;;
   import)
     otp_import
+    exit 0
+    ;;
+  *)
+    text "$RED" "Error: Invalid command $1" >&2
+    usage_otp
     exit 0
     ;;
   esac
