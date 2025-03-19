@@ -6,6 +6,8 @@ PASS_STORE=${PASS_STORE:-"$HOME/.pass/"}
 OTP_STORE="$PASS_STORE/otp/"
 RECUVA_STORE="$PASS_STORE/recovery/"
 
+NOTIFY=${NOTIFY:-$(sed -n 's/^NOTIFY=//p' "$PASSRC")}
+
 if [[ "$PASS_STORE" != "$HOME"* ]]; then
   echo "Danger! PASS_STORE is not located within the home directory!"
   echo "PASS_STORE Location: $PASS_STORE"
@@ -72,7 +74,7 @@ EOF
 }
 
 function otp_version() {
-  echo "v.2.1.0"
+  echo "v.2.2.0"
 }
 
 function otp_import() {
@@ -133,7 +135,7 @@ function generate_otp() {
   FORCE="${FORCE:-false}"
   FORCE=$(sed -n 's/^FORCE=//p' "$PASSRC")
   PASSWORD="$OTP_STORE/$name.age"
-  CLIP_POST_ACTION=${CLIP_POST_ACTION:-false}
+  CLIP_POST_ACTION=${CLIP_POST_ACTION:-$(sed -n 's/^CLIP_POST_ACTION=//p' "$PASSRC")}
   if [ ! -d "$OTP_STORE" ]; then
     mkdir "$OTP_STORE"
   fi
@@ -337,7 +339,6 @@ function get_otp_args() {
     d)
       DIALOG="$OPTARG"
       ;;
-    p) PWGEN_OPT="$OPTARG" ;;
     c)
       CLIP_POST_ACTION=true
       ;;
