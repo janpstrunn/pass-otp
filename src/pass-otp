@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# Envs
-
 PASSRC=${PASSRC:-"$HOME/.passrc"}
 PASS_STORE=${PASS_STORE:-"$HOME/.pass/"}
+
+OTP_STORE="$PASS_STORE/otp/"
 
 if [[ "$PASS_STORE" != "$HOME"* ]]; then
   echo "Danger! PASS_STORE is not located within the home directory!"
@@ -17,41 +17,43 @@ if ! command -v oathtool &>/dev/null; then
   exit 1
 fi
 
-# Global Variables
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+source "$SCRIPT_DIR/pass"
 
-OTP_STORE="$PASS_STORE/otp/"
-KEY_STORE="$PASS_STORE/keys/"
-MAIN_KEY="$KEY_STORE/main.age"
-PASS_KEY="$KEY_STORE/pass.age"
-TMP_DIR=/run/user/"$(id -u)"
-TMP_MAIN_KEY="$TMP_DIR"/tmp_main.600
-CLIP_POST_ACTION=false
-PASS_PUBKEY="$KEY_STORE/pass.pubkey"
-
-RED="$(tput setaf 196)"
-
-function usage() {
+function usage_otp() {
   cat <<EOF
-Pass-OTP: OTP Password Manager
+pass-otp: A modern CLI OTP manager
 
 Usage: $0 [options] <command> [arguments]
 
 Options:
-  -c, --clip        Copy OTP to clipboard after generating or editing
-  -f, --force       Bypass confirmation dialogs
-  -h, --help        Display this help message and exit
-  -o                Print OTP to stdout
+
+  -a [-s] <salt> [-i] <iteration>
+  -c                          Copy password to clipboard after password creation
+  -d <zenity>                 Choose a dialog to get passwords
+  -e                          Extra command run post clipboard cleareance
+  -f                          Force. Bypass confirmation dialogs. May be destructive.
+  -h, --help                  Display this help message and exit
+  -n                          Enable notifications
+                              Use Entropy Amplification
+  -z                          Don't keep private key cached
 
 Commands:
-  clip <pass-name>         Copy OTP to clipboard
-  edit <pass-name>         Edit an existing OTP using nano
-  find <pass-name>         Search OTP entries and display as a tree
-  import                   Import OTP keys from password store
-  list, ls                 List all OTP files in a tree format
-  new, generate [-f -c] <pass-name> <OTPKEY>
-                           Generate a new OTP entry
+  add, new, gen, generate [-a -f -c -p] <pass-name> <OTP-length>
+                           Generate a new OTP
+  close                    Remove cached private key
+  cp, copy, clip [-a] <pass-name>
+                           Copy OTP to clipboard
+  custom <pass-cmd> <pin-cmd>
+                           Specify a custom dialog to get master OTP and PIN
+  edit <pass-name>         Edit OTP key using nano
+  find <pass-name>         Search OTPs and display as a tree
+  import                   Import OTPs from password store
+  ls, list                 List all stored OTPs in a tree format
+  out, output, stdout [-a] <pass-name>
+                           Print OTP to stdout
   rm, remove [-f] <pass-name>
-                           Remove an OTP entry
+                           Remove a OTP entry
   version                  Display the current version number
 
 Examples:
@@ -61,26 +63,11 @@ Examples:
 EOF
 }
 
-function version() {
-  echo "v.1.0.0"
+function otp_version() {
+  echo "v.2.0.0"
 }
 
-function text() {
-  color=$1
-  text=$2
-  reset=$(tput sgr0)
-  echo -e "${color}${text}${reset}"
-}
-
-function error_check() {
-  error=$?
-  [[ "$error" -ne 0 ]] && {
-    echo "An error occurred!" >&2
-    exit 1
-  }
-}
-
-function pass_import() {
+function otp_import() {
   PASSWORD_STORE_DIR=${PASSWORD_STORE_DIR:-$HOME/.password-store/}
   if [ ! -d "$PASS_STORE" ]; then
     echo "PASS_STORE not found!"
@@ -118,174 +105,96 @@ function pass_import() {
   find "$OTP_STORE" -type f -exec chmod 600 {} +
 }
 
-# Decrypt main.age to get age pubkey
-function get_age_pub_key() {
-  local private
-  private=$1 # expects 'true'
-  pubkey=$(cat "$PASS_PUBKEY")
-  error_check
-  if [ "$private" = "true" ]; then
-    # use main.age tmp file and create a pass.age tmp file (shorter lived than main.age tmp file)
-    if [ ! -f "$TMP_MAIN_KEY" ]; then
-      touch "$TMP_MAIN_KEY"
-      chmod 600 "$TMP_MAIN_KEY"
-      age --decrypt "$MAIN_KEY" >"$TMP_MAIN_KEY" # use main.age and create a tmp file
-      error_check
-    fi
-    TMP_PASS_KEY=$(mktemp --tmpdir="$TMP_DIR" tmp_pass.XXXXXX)
-    age --decrypt --identity="$TMP_MAIN_KEY" "$PASS_KEY" >"$TMP_PASS_KEY"
-  fi
-  error_check
-}
-
-# List directories using eza or tree
-function list_passwords() {
-  if [ -d "$OTP_STORE" ]; then
-    if command -v eza &>/dev/null; then
-      eza -T "$OTP_STORE"
-    else
-      tree "$OTP_STORE"
-    fi
-  else
-    echo "No password store found!"
-    echo "Run setup first!"
-  fi
-}
-
-function output_password() {
-  get_age_pub_key true # get pubkey and create pass.age tmp file
-  # use pass.age tmp file to decrypt password to output it
-  age --decrypt --identity="$TMP_PASS_KEY" "$OTP_STORE/$name.age" | oathtool --totp --base32 -
-  unset $TMP_PASS_KEY
-}
-
-function fzf_passwords() {
-  if ! command -v fzf &>/dev/null; then
-    echo "fzf could not be found. Please install it."
-    exit 1
-  fi
-  if [ -d "$OTP_STORE" ]; then
-    cd "$OTP_STORE" || exit 1
-    if command -v fzf &>/dev/null; then
-      name=$(fzf --prompt "Select a password")
-      name=$(awk -F. '{print $1}' <<<"$name" | sed 's|^.\(.*\).gpg$|\1|')
-    else
-      echo "fzf is not installed"
-    fi
-  else
-    echo "No password store found!"
-    echo "Run setup first!"
-  fi
-}
-
-function find_passwords() {
-  if [ -d "$OTP_STORE" ]; then
-    cd "$OTP_STORE" || exit 1
-    if command -v fd &>/dev/null; then
-      fd -t f -i "$name" . | tree --fromfile
-    else
-      find . -type f -iname "*$name*" | tree --fromfile
-    fi
-  else
-    echo "No password store found!"
-    echo "Run setup first!"
-  fi
-}
-
-# Generate passwords, with optional length choice
-function generate_password() {
+function generate_otp() {
   local FORCE PASSWORD
   FORCE="${FORCE:-false}"
   FORCE=$(sed -n 's/^FORCE=//p' "$PASSRC")
   PASSWORD="$OTP_STORE/$name.age"
+  CLIP_POST_ACTION=${CLIP_POST_ACTION:-false}
+  if [ ! -d "$OTP_STORE" ]; then
+    mkdir "$OTP_STORE"
+  fi
   if [ -z "$otp_key" ]; then
     echo "Error: Missing OTP key"
     exit 1
   fi
   if [ -f "$PASSWORD" ]; then
-    echo "This password already exists!"
+    text "$BLUE" "This password already exists!"
     if [ "$FORCE" = "true" ]; then
       srm "$PASSWORD"
-      echo "Removed $name from store"
+      text "$RED" "Overwritting $name"
     else
       exit 1
     fi
   fi
-  get_age_pub_key # get pubkey
+
+  function otp_error() {
+    error=$?
+    [[ "$error" -ne 0 ]] && {
+      echo "An error occurred!" >&2
+      if [ -f "$PASSWORD" ]; then
+        srm "$PASSWORD"
+      fi
+      exit 1
+    }
+  }
+
+  get_age_key public # get pubkey
 
   cd "$PASSWORD_STORE" || exit 1
   mkdir -p "$(dirname "$name")"
 
-  echo "$otp_key" | age --encrypt --recipient="$pubkey" --output="$PASSWORD"
-  error_check
-  git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Add generated password for $name"
+  echo "$otp_key" | age --encrypt --recipient="$key" --output="$PASSWORD"
+  otp_error
+  git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Add generated OTP for $name"
   chmod 600 "$PASSWORD"
   if [ "$CLIP_POST_ACTION" = "true" ]; then
     copy_password
   fi
 }
 
-# Remove password from store
-function remove_password() {
-  local FORCE
-  FORCE="${FORCE:-false}"
-  FORCE=$(sed -n 's/^FORCE=//p' "$PASSRC")
-  if [ "$FORCE" = "true" ]; then
-    srm "$OTP_STORE"/"$name".age
-    echo "Remove $name from store"
-  else
-    text "$RED" "Are you sure you want to remove $name? (y/N)"
-    select choice_continue in "yes" "no"; do
-      case $choice_continue in
-      yes) break ;;
-      no) exit 0 ;;
-      esac
-    done
-    srm "$OTP_STORE"/"$name".age
-    echo "Remove $name from store"
-  fi
-  error_check
-  git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Remove $name from store"
-}
-
-# Edit password
 function edit_password() {
-  local tmp_file decrypted_file PASSWORD
-  PASSWORD="$OTP_STORE/$name.age"
-  tmp_file="$OTP_STORE/$name.tmp"
-  decrypted_file="$(mktemp --tmpdir="$TMP_DIR" tmp_decpass.XXXXXX)"
+  local tmp_file PASSWORD STORE PASS_OPERATION
+  PASS_OPERATION="$2"
+  STORE=${1:-"$PASSWORD_STORE"}
+  PASSWORD="$STORE/$name.age"
+  tmp_file="$STORE/$name.tmp"
+  decrypted_file=$(mktemp --tmpdir="/run/user/$(id -u)/" tmp_pass.XXXXXX)
 
-  get_age_pub_key true # get pubkey and create pass.age tmp file
+  function edit_error() {
+    val=$?
+    if [ "$val" -ne 0 ]; then
+      mv "$tmp_file" "$PASSWORD"
+      srm "$decrypted_file"
+      echo "An error occurred!" >&2
+      return 1
+    fi
+  }
+
+  get_age_key private
 
   if [ -f "$tmp_file" ]; then
     mv "$tmp_file" "$PASSWORD"
   fi
 
   mv "$OTP_STORE/$name.age" "$tmp_file" # safeguard original password
-  # use pass.age tmp file to decrypt password to modify it later
-  age --decrypt --identity="$TMP_PASS_KEY" "$tmp_file" >"$decrypted_file" || {
-    mv "$tmp_file" "$PASSWORD"
-    unset $TMP_PASS_KEY "$decrypted_file"
-    echo "An error occurred!" >&2
-    return 1
-  }
+
+  key=$(get_age_key_amp_get pass)
+  age --decrypt --identity <(echo "$key") "$tmp_file" >"$decrypted_file"
+  edit_error
 
   nano "$decrypted_file"
+  edit_error
 
-  # use pass.age pubkey to create our new password
-  age --encrypt --recipient="$pubkey" -o "$PASSWORD" "$decrypted_file" || {
-    mv "$tmp_file" "$PASSWORD"
-    unset $TMP_PASS_KEY "$decrypted_file"
-    echo "An error occurred!" >&2
-    return 1
-  }
+  get_age_key public
 
-  # clear all tmp files
-  srm "$tmp_file"
-  unset $TMP_PASS_KEY "$decrypted_file"
+  age --encrypt --recipient="$key" -o "$PASSWORD" "$decrypted_file"
+  edit_error
+
+  srm "$tmp_file" "$decrypted_file"
 
   git -C "$PASS_STORE" add . &&
-    git -C "$PASS_STORE" commit -m "Edit OTP $name"
+    git -C "$PASS_STORE" commit -m "Edit $PASS_OPERATION $name"
   chmod 600 "$PASSWORD"
 
   if [ "$CLIP_POST_ACTION" = "true" ]; then
@@ -293,149 +202,155 @@ function edit_password() {
   fi
 }
 
-# Clears clipboard
-function clear_clipboard() {
-  local CLIPHIST_WIPE
-  CLIPHIST_WIPE=$(sed -n 's/^CLIPHIST_WIPE=//p' "$PASSRC")
-  CLIPHIST_WIPE="${CLIPHIST_WIPE:-false}"
-  if [ "$clipmethod" = "x11" ]; then
-    echo "" | xclip -sel clip
-  elif [ "$clipmethod" = "wayland" ]; then
-    echo "" | wl-copy
-  fi
-  if [ "$CLIPHIST_WIPE" == "true" ]; then
-    if command -v cliphist &>/dev/null; then
-      cliphist wipe
-      exit 1
-    else
-      echo "Cliphist is not installed"
-    fi
-  fi
+function copy_otp() {
+  copy_password
+  clip_otp
 }
 
-# Copy password to clipboard
-function copy_password() {
-  local password_file="$OTP_STORE/$name.age"
-  local clipmethod="$XDG_SESSION_TYPE"
-  local CLIPBOARD_CLEAR_TIME
-  CLIPBOARD_CLEAR_TIME=$(sed -n 's/^CLIPBOARD_CLEAR_TIME=//p' "$PASSRC")
-  CLIPBOARD_CLEAR_TIME="${CLIPBOARD_CLEAR_TIME:-5}"
-
-  get_age_pub_key true # get pubkey and create pass.age tmp file
-
-  if [ "$clipmethod" = "x11" ]; then
-    age --decrypt --identity="$TMP_PASS_KEY" "$password_file" | oathtool --totp --base32 - | xclip -sel clip
-  elif [ "$clipmethod" = "wayland" ]; then
-    age --decrypt --identity="$TMP_PASS_KEY" "$password_file" | oathtool --totp --base32 - | wl-copy
-  fi
-  val=$?
-  unset $TMP_PASS_KEY
-
-  if [ "$val" -ne 0 ]; then
-    echo "An error occurred!" >&2
-    return 1
+function clip_otp() {
+  if [ "$ENTROPY_AMPLIFICATION" = "true" ]; then
+    key=$(get_age_key_amp_get pass)
+    age --decrypt --identity <(echo "$key") "$STORE" | oathtool --totp --base32 - | $clip_command
+  else
+    key=$(get_age_key_amp_get pass)
+    age --decrypt --identity <(echo "$key") "$STORE" | oathtool --totp --base32 - | $clip_command
   fi
 
-  # clear all tmp files
   echo "Clearing the password from clipboard in $CLIPBOARD_CLEAR_TIME seconds..."
+  if [ "$NOTIFY" = "true" ]; then
+    notify-send -u normal "Pass: Copy" "Clearing the password in $CLIPBOARD_CLEAR_TIME seconds..."
+  fi
   sleep "$CLIPBOARD_CLEAR_TIME"s
   clear_clipboard
 }
 
-while getopts ":hfco" opt; do
-  case "$opt" in
-  h)
-    usage
+function get_otp_args() {
+  while getopts ":hnafvezc:d:p:i:s:" opt; do
+    case "$opt" in
+    a)
+      ENTROPY_AMPLIFICATION=true
+      ;;
+    n)
+      NOTIFY=true
+      ;;
+    i)
+      ENTROPY_ITERATION="$OPTARG"
+      ;;
+    e)
+      POST_CLIPBOARD_CLEAR=$(sed -n 's/^POST_CLIPBOARD_CLEAR=//p' "$PASSRC")
+      ;;
+    s)
+      ENTROPY_SALT="$OPTARG"
+      ;;
+    h)
+      usage_otp
+      exit 0
+      ;;
+    f) FORCE=true ;;
+    d)
+      DIALOG="$OPTARG"
+      ;;
+    p) PWGEN_OPT="$OPTARG" ;;
+    c)
+      CLIP_POST_ACTION=true
+      ;;
+    v)
+      otp_version
+      exit 0
+      ;;
+    z)
+      KEEP_PASS=false
+      ;;
+    ?)
+      echo "Error: Invalid option '-$OPTARG'" >&2
+      usage_otp
+      exit 0
+      ;;
+    esac
+  done
+
+  shift $((OPTIND - 1))
+
+  case "$1" in
+  -h | --help | usage)
+    usage_otp
     exit 0
     ;;
-  f) FORCE=true ;;
-  c)
-    CLIP_POST_ACTION=true
+  cp | copy | clip)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$OTP_STORE"
+    fi
+    copy_otp
+    exit 0
     ;;
-  o)
+  custom-cmd)
+    DIALOG="custom"
+    shift
+    CUSTOM_CMD_PASSWORD="$1"
+    shift
+    CUSTOM_CMD_PIN="$1"
+    shift
+    ;;
+  add | new | generate)
     shift
     name="$1"
     if [[ -z "$name" ]]; then
-      fzf_passwords
+      echo "Missing name"
     fi
-    output_password
+    otp_key="$2"
+    generate_otp
     exit 0
     ;;
-  ?)
-    echo "Error: Invalid option '-$OPTARG'" >&2
-    usage
+  edit)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$OTP_STORE"
+    fi
+    edit_password "$OTP_STORE" OTP
+    exit 0
+    ;;
+  output | out | stdout)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$OTP_STORE"
+    fi
+    output_password "$OTP_STORE"
+    exit 0
+    ;;
+  ls | list)
+    list_passwords "$OTP_STORE"
+    exit 0
+    ;;
+  rm | remove)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$OTP_STORE"
+    fi
+    remove_password "$OTP_STORE"
+    exit 0
+    ;;
+  find)
+    shift
+    name=$1
+    find_passwords "$OTP_STORE"
+    exit 0
+    ;;
+  version)
+    version
+    exit 0
+    ;;
+  import)
+    pass_import
+    exit 0
     ;;
   esac
-done
+}
 
-shift $((OPTIND - 1))
-
-case "$1" in
--h | --help | usage)
-  usage
-  exit 0
-  ;;
---clip)
-  shift
-  CLIP_POST_ACTION=true
-  ;;
---force)
-  shift
-  FORCE=true
-  ;;
-clip)
-  shift
-  name=$1
-  if [[ -z "$name" ]]; then
-    fzf_passwords
-  fi
-  copy_password
-  exit 0
-  ;;
-new | generate)
-  shift
-  name="$1"
-  if [[ -z "$name" ]]; then
-    echo "Missing name"
-  fi
-  otp_key="$2"
-  generate_password
-  exit 0
-  ;;
-edit)
-  shift
-  name=$1
-  if [[ -z "$name" ]]; then
-    fzf_passwords
-  fi
-  edit_password
-  exit 0
-  ;;
-ls | list)
-  list_passwords
-  exit 0
-  ;;
-rm | remove)
-  shift
-  name=$1
-  if [[ -z "$name" ]]; then
-    fzf_passwords
-  fi
-  remove_password
-  exit 0
-  ;;
-find)
-  shift
-  name=$1
-  find_passwords
-  exit 0
-  ;;
---version | version)
-  version
-  exit 0
-  ;;
-import)
-  pass_import
-  exit 0
-  ;;
-esac
+if [[ "$(basename "$0")" =~ pass-otp$ ]]; then
+  get_otp_args "$@"
+fi
