@@ -292,6 +292,9 @@ function clip_otp() {
   val=$?
   if [ "$val" -ne 0 ]; then
     text "$RED" "Error: This is not an OTP key!"
+    if [ "$NOTIFY" = "true" ]; then
+      notify-send -u low "pass-otp: Error" "This is not an OTP key!"
+    fi
     exit 1
   fi
   echo "Clearing the password from clipboard in $CLIPBOARD_CLEAR_TIME seconds..."
