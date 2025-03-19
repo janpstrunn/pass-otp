@@ -1,7 +1,7 @@
 <img src="https://git.disroot.org/janpstrunn/images/raw/branch/main/pass.png" align="right" height="100"/>
 <br>
 
-<h1 align="left">Pass-OTP</h1>
+<h1 align="left">pass-otp: A modern CLI OTP manager</h1>
 
 > [!WARNING]
 > As of 2025-03-18, pass-otp is not compatible with pass v2.0.0.
