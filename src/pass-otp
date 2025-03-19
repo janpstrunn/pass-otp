@@ -289,6 +289,11 @@ function clip_otp() {
   PASSWORD="$OTP_STORE/$name.age"
   key=$(get_age_key_amp_get pass)
   age --decrypt --identity <(echo "$key") "$PASSWORD" | oathtool --totp --base32 - | $clip_command
+  val=$?
+  if [ "$val" -ne 0 ]; then
+    text "$RED" "Error: This is not an OTP key!"
+    exit 1
+  fi
   echo "Clearing the password from clipboard in $CLIPBOARD_CLEAR_TIME seconds..."
   if [ "$NOTIFY" = "true" ]; then
     notify-send -u normal "Pass: Copy" "Clearing the password in $CLIPBOARD_CLEAR_TIME seconds..."
