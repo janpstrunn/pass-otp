@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.1] 2025-03-19
+
+### Added
+
+- Option to force import passwords from passwordstore, by force setting PASSWORD_STORE_DIR as `$HOME/.password-store/`
+
+### Fixed
+
+- Proper variable setting to some scriptable functions
+
 ## [2.1.0] 2025-03-19
 
 ### Added
