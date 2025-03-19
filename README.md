@@ -3,9 +3,6 @@
 
 <h1 align="left">pass-otp: A modern CLI OTP manager</h1>
 
-> [!WARNING]
-> As of 2025-03-18, pass-otp is not compatible with pass v2.0.0.
-
 `pass-otp` is a simple password manager for OTP passwords written in shell, mean to be used alongside [pass](https://github.com/janpstrunn/pass) which tries to replace the [passwordstore](https://www.passwordstore.org/) keeping its core philosophies.
 
 It's a CLI tool that tries to make the process of managing one time passwords (OTP) a breeze while keeping yourself secure with good security standards. [Aware some current potential security issues](#potential-security-issues).
