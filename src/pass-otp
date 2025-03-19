@@ -53,6 +53,7 @@ Commands:
   ls, list                 List all stored OTPs in a tree format
   out, output, stdout [-a] <pass-name>
                            Print OTP to stdout
+  recuva <pass-name>       Use nano to manage recovery keys
   rm, remove [-f] <pass-name>
                            Remove a OTP entry
   version                  Display the current version number
@@ -65,7 +66,7 @@ EOF
 }
 
 function otp_version() {
-  echo "v.2.0.0"
+  echo "v.2.1.0"
 }
 
 function otp_import() {

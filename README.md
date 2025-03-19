@@ -19,6 +19,7 @@ It's a CLI tool that tries to make the process of managing one time passwords (O
 - Use `zenity` to insert passwords
 - Specify a dialog tool to get master password and PIN
 - Edit OTP using `nano`
+- Manage recovery keys
 
 ## Requirements
 
@@ -66,6 +67,7 @@ Commands:
   ls, list                 List all stored OTPs in a tree format
   out, output, stdout [-a] <pass-name>
                            Print OTP to stdout
+  recuva <pass-name>       Use nano to manage recovery keys
   rm, remove [-f] <pass-name>
                            Remove a OTP entry
   version                  Display the current version number
