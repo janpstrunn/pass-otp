@@ -77,6 +77,16 @@ Examples:
 > [!IMPORTANT]
 > First time running `pass-otp`, requires to use setup your [pass](https://github.com/janpstrunn/pass) first.
 
+## Importing from passwordstore
+
+For those who what to import OTP from passwordstore, I do recommend to keep `pass` command out of the `$PATH` and run the following command:
+
+```bash
+./pass-otp import
+```
+
+Since both are named `pass`, it may conflict and not properly import your passwords.
+
 ## Notes
 
 This script has been only tested in a Linux Machine.
