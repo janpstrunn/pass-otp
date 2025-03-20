@@ -1,0 +1,109 @@
+.TH pass-otp 1 "March 2025" "2.2.0" "User Commands"
+.SH NAME
+pass-otp \- A modern CLI OTP manager
+.SH SYNOPSIS
+.B pass-otp
+[OPTIONS] <command> [arguments]
+.SH DESCRIPTION
+pass-otp is a simple password manager for OTP passwords written in shell, meant to be used alongside pass which tries to replace the passwordstore keeping its core philosophies.
+
+It's a CLI tool that tries to make the process of managing one time passwords (OTP) and recovery keys a breeze while keeping yourself secure with good security standards.
+
+.SH OPTIONS
+.TP
+.B -a [-s] <salt> [-i] <iteration>
+Use entropy amplification with optional salt and iteration count.
+.TP
+.B -c
+Copy password to clipboard after password creation.
+.TP
+.B -d <zenity>
+Choose a dialog to get passwords. Only zenity(1) is available for now.
+.TP
+.B -e
+Extra command run post clipboard clearance.
+.TP
+.B -f
+Force. Bypass confirmation dialogs. May be destructive.
+.TP
+.B -h, --help
+Display this help message and exit.
+.TP
+.B -i <iteration>
+Define iterations for entropy amplification.
+.TP
+.B -n
+Enable notifications.
+.TP
+.B -s <salt>
+Define salt for entropy amplification.
+.TP
+.B -z
+Don't keep private key cached.
+
+.SH COMMANDS
+.TP
+.B add, new, gen, generate [-f -c] <pass-name> <OTP_KEY>
+Generate a new OTP from an OTP KEY, with optional arguments for force and clipboard copy.
+.TP
+.B cp, copy, clip [-a] <pass-name>
+Copy OTP to the clipboard.
+.TP
+.B custom <pass-cmd> <pin-cmd>
+Specify a custom dialog to get the master password and PIN.
+.TP
+.B edit [-a] <pass-name>
+Edit an OTP Key using nano
+.TP
+.B find <pass-name>
+Search OTPs and display them as a tree.
+.TP
+.B import
+Import OTP from the passwordstore.
+.TP
+.B ls, list
+List all stored OTPs in a tree format.
+.TP
+.B out, output, stdout [-a] <pass-name>
+Print a password to stdout.
+.TP
+.B rm, remove [-f] <pass-name>
+Remove an OTP entry.
+.TP
+.B version
+Display the current version number.
+
+.SH EXAMPLES
+.TP
+.B pass new -c MyAccount ABCDEFGHIJKLMNOP
+Generate a new OTP using ABCDEFGHIJKLMNOP OTP Key, and immediately copy it to the clipboard.
+.TP
+.B pass clip MyAccount
+Copy MyAccount OTP to clipboard.
+.TP
+.B pass list
+List all available OTP.
+
+.SH ENTROPY AMPLIFICATION
+The concept of entropy amplification aims to turn small, easy passwords (e.g., a PIN) into larger, more secure passwords.
+.TP
+This is achieved by using the Argon2 algorithm (see argon2(1)) to hash the input password, applying a salt (default: HOSTNAME) and a number of iterations (default: 2), resulting in a significantly more secure password.
+.TP
+This mechanism serves multiple purposes:
+.TP
+- To generate larger, harder-to-crack passwords from small inputs.
+.TP
+- To avoid storing the private key in plaintext by requiring a PIN to decrypt the cached key.
+.TP
+When setting up a key, if a user provides a custom salt, that salt will always be required to access your passwords. This ensures that even if the cached private key is compromised, it cannot be decrypted without the specific salt and PIN.
+.TP
+The main advantage of this setup is convenience. It allows for enhanced security without needing to store a private key in plaintext, or rely on complex passwords that are hard to remember neither hard to input.
+
+.SH EXIT STATUS
+0 on success, non-zero on failure.
+
+.SH AUTHOR
+Janpstrunn <janpstrunn@disroot.org>
+
+.SH SEE ALSO
+age(1) oathtool(1)
