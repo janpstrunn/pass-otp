@@ -28,10 +28,7 @@ It's a CLI tool that tries to make the process of managing one time passwords (O
 ## Installation
 
 ```
-git clone https://github.com/janpstrunn/pass-otp
-cd pass-otp
-chmod 700 src/pass-otp
-mv src/pass-otp "$HOME/.local/bin"
+curl -sSL https://github.com/user/pass/raw/main/install.sh | bash
 ```
 
 ## Usage
@@ -56,7 +53,6 @@ Usage: pass-otp [options] <command> [arguments]
 Commands:
   add, new, gen, generate [-f -c] <pass-name> <OTP>
                            Generate a new OTP
-  close                    Remove cached private key
   cp, copy, clip [-a] <pass-name>
                            Copy OTP to clipboard
   custom <pass-cmd> <pin-cmd>

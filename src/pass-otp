@@ -53,7 +53,6 @@ Usage: pass-otp [options] <command> [arguments]
 Commands:
   add, new, gen, generate [-f -c] <pass-name> <OTP>
                            Generate a new OTP
-  close                    Remove cached private key
   cp, copy, clip [-a] <pass-name>
                            Copy OTP to clipboard
   custom <pass-cmd> <pin-cmd>
@@ -77,7 +76,7 @@ EOF
 }
 
 function otp_version() {
-  echo "v.2.2.0"
+  echo "v.2.2.1"
 }
 
 function otp_import() {
