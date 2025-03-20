@@ -2,7 +2,7 @@
 
 echo "Cloning repository"
 git clone https://github.com/janpstrunn/pass-otp
-cd pass
+cd pass-otp
 
 # Install the main script
 chmod 700 src/pass-otp
