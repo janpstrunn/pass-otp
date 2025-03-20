@@ -24,6 +24,9 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 if [ ! -f "$SCRIPT_DIR/pass" ]; then
   echo "Error: Missing dependencies"
   echo "pass is not installed"
+  if [ "$NOTIFY" = "true" ]; then
+    notify-send -u critical "Pass: Error" "Missing dependencies!" --expire-time=5000
+  fi
   exit 1
 else
   source "$SCRIPT_DIR/pass"
@@ -87,6 +90,9 @@ function otp_import() {
   fi
   if [ ! -d "$PASS_STORE" ]; then
     text "$RED" "Error: PASS_STORE not found!"
+    if [ "$NOTIFY" = "true" ]; then
+      notify-send -u critical "Pass: Error" "PASS_STORE not found!" --expire-time=5000
+    fi
     exit 1
   fi
   if [ ! -d "$OTP_STORE" ]; then
@@ -94,6 +100,9 @@ function otp_import() {
   fi
   if [ -z "$PASS_PUBKEY" ]; then
     text "$RED" "Error: Missing public age key!"
+    if [ "$NOTIFY" = "true" ]; then
+      notify-send -u critical "Pass: Error" "Missing public age key!" --expire-time=5000
+    fi
     exit 1
   fi
   cd "$PASSWORD_STORE_DIR" || exit 1
@@ -143,6 +152,9 @@ function generate_otp() {
   fi
   if [ -z "$otp_key" ]; then
     echo "Error: Missing OTP key"
+    if [ "$NOTIFY" = "true" ]; then
+      notify-send -u critical "Pass: Error" "Missing OTP key!" --expire-time=5000
+    fi
     exit 1
   fi
   if [ -f "$PASSWORD" ]; then
@@ -159,6 +171,9 @@ function generate_otp() {
     error=$?
     [[ "$error" -ne 0 ]] && {
       echo "An error occurred!" >&2
+      if [ "$NOTIFY" = "true" ]; then
+        notify-send -u critical "Pass: Error" "An error occurred!" --expire-time=5000
+      fi
       if [ -f "$PASSWORD" ]; then
         srm "$PASSWORD"
       fi
@@ -188,16 +203,6 @@ function edit_otp() {
   tmp_file="$STORE/$name.tmp"
   decrypted_file=$(mktemp --tmpdir="/run/user/$(id -u)/" tmp_pass.XXXXXX)
 
-  function edit_error() {
-    val=$?
-    if [ "$val" -ne 0 ]; then
-      mv "$tmp_file" "$PASSWORD"
-      srm "$decrypted_file"
-      echo "An error occurred!" >&2
-      return 1
-    fi
-  }
-
   get_age_key private
 
   if [ -f "$tmp_file" ]; then
@@ -225,10 +230,23 @@ function edit_otp() {
   chmod 600 "$PASSWORD"
 
   if [ "$NOTIFY" = "true" ]; then
-    notify-send -u normal "Pass: Edit" "Edit $PASS_OPERATION $name"
+    notify-send -u normal "Pass: Edit" "Edited $PASS_OPERATION $name" --expire-time=3500
   fi
   if [ "$CLIP_POST_ACTION" = "true" ]; then
     copy_otp
+  fi
+}
+
+function edit_error() {
+  val=$?
+  if [ "$val" -ne 0 ]; then
+    mv "$tmp_file" "$PASSWORD"
+    srm "$decrypted_file"
+    echo "An error occurred!" >&2
+    if [ "$NOTIFY" = "true" ]; then
+      notify-send -u critical "Pass: Error" "An error occurred!" --expire-time=5000
+    fi
+    return 1
   fi
 }
 
@@ -238,16 +256,6 @@ function recuva() {
   PASSWORD="$STORE/$name.age"
   tmp_file="$STORE/$name.tmp"
   decrypted_file=$(mktemp --tmpdir="/run/user/$(id -u)/" tmp_pass.XXXXXX)
-
-  function edit_error() {
-    val=$?
-    if [ "$val" -ne 0 ]; then
-      mv "$tmp_file" "$PASSWORD"
-      srm "$decrypted_file"
-      echo "An error occurred!" >&2
-      return 1
-    fi
-  }
 
   if [ ! -f "$PASSWORD" ]; then
     [[ ! -d "$STORE" ]] && mkdir "$STORE"
@@ -282,7 +290,7 @@ function recuva() {
   chmod 600 "$PASSWORD"
 
   if [ "$NOTIFY" = "true" ]; then
-    notify-send -u normal "Pass: Edit" "Edit recovery key: $name"
+    notify-send -u normal "Pass: Edit" "Edited recovery key: $name" --expire-time=3500
   fi
   if [ "$CLIP_POST_ACTION" = "true" ]; then
     copy_otp
@@ -303,13 +311,13 @@ function clip_otp() {
   if [ "$val" -ne 0 ]; then
     text "$RED" "Error: This is not an OTP key!"
     if [ "$NOTIFY" = "true" ]; then
-      notify-send -u low "pass-otp: Error" "This is not an OTP key!" --expire-time=3000
+      notify-send -u low "pass-otp: Error" "This is not an OTP key!" --expire-time=3500
     fi
     exit 1
   fi
   echo "Clearing the password from clipboard in $CLIPBOARD_CLEAR_TIME seconds..."
   if [ "$NOTIFY" = "true" ]; then
-    notify-send -u normal "Pass: Copy" "Clearing the OTP in $CLIPBOARD_CLEAR_TIME seconds..." --expire-time=3000
+    notify-send -u normal "Pass: Copy" "Clearing the OTP in $CLIPBOARD_CLEAR_TIME seconds..." --expire-time=3500
   fi
   sleep "$CLIPBOARD_CLEAR_TIME"s
   clear_clipboard
