@@ -28,7 +28,7 @@ It's a CLI tool that tries to make the process of managing one time passwords (O
 ## Installation
 
 ```
-curl -sSL https://github.com/user/pass/raw/main/install.sh | bash
+curl -sSL https://github.com/janpstrunn/pass-otp/raw/main/install.sh | bash
 ```
 
 ## Usage
