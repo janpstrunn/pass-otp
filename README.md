@@ -79,13 +79,13 @@ Examples:
 
 ## Importing from passwordstore
 
-For those who what to import OTP from passwordstore, I do recommend to keep `pass` command out of the `$PATH` and run the following command:
+For those who what to import OTP from `passwordstore`, you can simply run the following command:
 
 ```bash
 ./pass-otp import
 ```
 
-Since both are named `pass`, it may conflict and not properly import your passwords.
+If `$PASSWORD_STORE_DIR` is not defined in your `.env` file, you can use the `-f` flag to set it to default.
 
 ## Notes
 

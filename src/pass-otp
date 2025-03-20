@@ -106,7 +106,7 @@ function otp_import() {
   find . -type f -name "*.gpg" | while IFS= read -r password_file; do
     password_name=$(sed 's|^.\(.*\).gpg$|\1|' <<<"$password_file")
     password_dir=$(sed 's|^./\(.*\)/[^/]*\.gpg$|\1/|' <<<"$password_file")
-    password=$(pass "$password_name" | tail -n 1 | awk -F'secret=' '
+    password=$(gpg --decrypt "$password_name" | tail -n 1 | awk -F'secret=' '
     { if (NF > 1) { split($2, a, "&"); print a[1] } else { exit 1 } }')
 
     if [ $? -ne 0 ]; then
