@@ -39,7 +39,7 @@ mv src/pass-otp "$HOME/.local/bin"
 ```
 pass-otp: A modern CLI OTP manager
 
-Usage: $0 [options] <command> [arguments]
+Usage: pass-otp [options] <command> [arguments]
 
   -a [-s] <salt> [-i] <iteration>
                               Use Entropy Amplification
@@ -54,7 +54,7 @@ Usage: $0 [options] <command> [arguments]
   -z                          Don't keep private key cached
 
 Commands:
-  add, new, gen, generate [-a -f -c -p] <pass-name> <OTP-length>
+  add, new, gen, generate [-f -c] <pass-name> <OTP>
                            Generate a new OTP
   close                    Remove cached private key
   cp, copy, clip [-a] <pass-name>
@@ -73,9 +73,9 @@ Commands:
   version                  Display the current version number
 
 Examples:
-  $0 new -c MyService ABCDEFGHIJKLMNOP
-  $0 clip MyService
-  $0 list
+  pass-otp new -c MyService ABCDEFGHIJKLMNOP
+  pass-otp clip MyService
+  pass-otp list
 ```
 
 > [!IMPORTANT]

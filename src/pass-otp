@@ -36,9 +36,7 @@ function usage_otp() {
   cat <<EOF
 pass-otp: A modern CLI OTP manager
 
-Usage: $0 [options] <command> [arguments]
-
-Options:
+Usage: pass-otp [options] <command> [arguments]
 
   -a [-s] <salt> [-i] <iteration>
                               Use Entropy Amplification
@@ -53,7 +51,7 @@ Options:
   -z                          Don't keep private key cached
 
 Commands:
-  add, new, gen, generate [-a -f -c -p] <pass-name> <OTP-length>
+  add, new, gen, generate [-f -c] <pass-name> <OTP>
                            Generate a new OTP
   close                    Remove cached private key
   cp, copy, clip [-a] <pass-name>
