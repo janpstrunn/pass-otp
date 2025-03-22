@@ -93,7 +93,13 @@ function otp_import() {
   find . -type f -name "*.gpg" | while IFS= read -r password_file; do
     password_name=$(sed 's|^.\(.*\).gpg$|\1|' <<<"$password_file")
     password_dir=$(sed 's|^./\(.*\)/[^/]*\.gpg$|\1/|' <<<"$password_file")
-    password=$(gpg --decrypt "$password_name" | tail -n 1)
+    password=$(gpg --decrypt "$password_file" 2>/dev/null | tail -n 1 | awk -F'secret=' '
+    { if (NF > 1) { split($2, a, "&"); print a[1] } else { exit 1 } }')
+
+    if [ $? -ne 0 ]; then
+      text "$RED" "Error: $password_name does not have a OTP secret key!" >&2
+      continue
+    fi
 
     if [ "$(awk -F '/' '{print $1}' <<<"$password_dir")" != "." ]; then
       mkdir -p "$OTP_STORE/$password_dir" || handle_error 11 "Failed to make $password_dir directory"
@@ -103,14 +109,14 @@ function otp_import() {
     val=$?
 
     if [ $val -ne 0 ]; then
-      text "$RED" "Error encrypting password: $password_name" >&2
+      text "$RED" "Error encrypting OTP: $password_name" >&2
       continue
     fi
 
-    text "$GREEN" "Password $password_name encrypted successfully!"
+    text "$GREEN" "OTP Key $password_name encrypted successfully!"
   done
 
-  git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Imported passwords from passwordstore"
+  git -C "$PASS_STORE" add . && git -C "$PASS_STORE" commit . -m "Imported OTP from passwordstore"
 
   text "$GREEN" "All OTP Keys have been imported!"
 
@@ -398,8 +404,7 @@ function get_otp_args() {
     exit 0
     ;;
   *)
-    text "$RED" "Error: Invalid command $1" >&2
-    usage_otp
+    list_passwords "$OTP_STORE"
     exit 0
     ;;
   esac
