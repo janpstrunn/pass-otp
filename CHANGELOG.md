@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.0] 2025-03-22
+
+### Added
+
+- Remove recovery keys using `rm-recuva`
+
+### Fixed
+
+- Import not working properly
+
+### Changed
+
+- Decrypt gpg keys using `gpg` instead of `pass`
+- BREAKING CHANGE: Several improvements to reduce codebase
+
 ## [2.2.1] 2025-03-20
 
 ### Added

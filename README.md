@@ -34,7 +34,11 @@ curl -sSL https://github.com/janpstrunn/pass-otp/raw/main/install.sh | bash
 ## Usage
 
 ```
-pass-otp: A modern CLI OTP manager
+  ---------------------------------------------------
+  ---------------------pass-otp----------------------
+  ---------------------------------------------------
+  -------------A modern CLI OTP manager--------------
+  ---------------------------------------------------
 
 Usage: pass-otp [options] <command> [arguments]
 
@@ -45,8 +49,10 @@ Usage: pass-otp [options] <command> [arguments]
   -e                          Extra command run post clipboard cleareance
   -f                          Force. Bypass confirmation dialogs. May be destructive.
   -h, --help                  Display this help message and exit
-  -i <iteration>               Define iterations for Entropy Amplification
+  -l <parallels>              Define paralellism for Entropy Amplification
+  -i <iteration>              Define iterations for Entropy Amplification
   -n                          Enable notifications
+  -p <pin>                    Antecipate PIN
   -s <salt>                   Define salt for Entropy Amplification
   -z                          Don't keep private key cached
 
@@ -55,7 +61,7 @@ Commands:
                            Generate a new OTP
   cp, copy, clip [-a] <pass-name>
                            Copy OTP to clipboard
-  custom <pass-cmd> <pin-cmd>
+  custom, custom-cmd <pass-cmd> <pin-cmd>
                            Specify a custom dialog to get master OTP and PIN
   edit <pass-name>         Edit OTP key using nano
   find <pass-name>         Search OTPs and display as a tree
