@@ -385,6 +385,15 @@ function get_otp_args() {
     remove_password "$OTP_STORE" OTP
     exit 0
     ;;
+  rm-recuva)
+    shift
+    name=$1
+    if [[ -z "$name" ]]; then
+      fzf_passwords "$RECUVA_STORE"
+    fi
+    remove_password "$RECUVA_STORE" "recovery key"
+    exit 0
+    ;;
   find)
     shift
     name=$1
