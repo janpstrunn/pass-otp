@@ -6,6 +6,10 @@ PASS_STORE=${PASS_STORE:-"$HOME/.pass/"}
 OTP_STORE="$PASS_STORE/otp/"
 RECUVA_STORE="$PASS_STORE/recovery/"
 
+if [ ! -d "$RECUVA_STORE" ]; then
+  mkdir "$RECUVA_STORE"
+fi
+
 if ! command -v oathtool &>/dev/null; then
   echo "oathtool could not be found. Please install it."
   exit 1
@@ -125,7 +129,7 @@ function otp_import() {
 
 function output_otp() {
   local STORE
-  STORE=${1:-"$PASSWORD_STORE"}
+  STORE=${1:-"$OTP_STORE"}
   PASSWORD="$STORE/$name.age"
   handle_required_dir "$STORE"
   handle_required_files "$PASSWORD"
@@ -133,7 +137,7 @@ function output_otp() {
   get_age_key
 
   key=$(get_age_pass_expect)
-  if [[ "$(basename "$0")" =~ pass$ ]]; then
+  if [[ "$(basename "$0")" =~ pass-otp$ ]]; then
     age --decrypt --identity <(echo "$key") "$PASSWORD" | oathtool --totp --base32 -
   fi
 }
@@ -196,6 +200,10 @@ function edit_otp() {
 
   get_age_key
 
+  if [ "$PASS_OPERATION" == "recovery key" ]; then
+    touch "$PASSWORD"
+  fi
+
   if [ ! -f "$tmp_file" ]; then
     mv "$PASSWORD" "$tmp_file" # safeguard original password
   fi
@@ -207,9 +215,7 @@ function edit_otp() {
   nano "$decrypted_file"
   edit_error "Failed to edit file!"
 
-  get_age_key public
-
-  age --encrypt --recipient="$key" -o "$PASSWORD" "$decrypted_file"
+  age --encrypt --recipient="$(cat "$PASS_PUBKEY")" -o "$PASSWORD" "$decrypted_file"
   edit_error "Failed to encrypt password!"
 
   srm "$tmp_file" "$decrypted_file"
@@ -245,7 +251,7 @@ function copy_otp() {
 function clip_otp() {
   local PASSWORD
   PASSWORD="$OTP_STORE/$name.age"
-  key=$(get_age_key_amp_get pass)
+  key=$(get_age_pass_expect)
   password=$(age --decrypt --identity <(echo "$key") "$PASSWORD")
   val=$?
   if [ "$val" -ne 0 ]; then
@@ -287,7 +293,7 @@ function get_otp_args() {
       ENTROPY_SALT="$OPTARG"
       ;;
     h)
-      usage
+      usage_otp
       exit 0
       ;;
     f) FORCE=true ;;
@@ -363,7 +369,6 @@ function get_otp_args() {
     if [[ -z "$name" ]]; then
       fzf_passwords "$OTP_STORE"
     fi
-    output_password "$OTP_STORE"
     output_otp
     exit 0
     ;;
@@ -403,8 +408,13 @@ function get_otp_args() {
     otp_import
     exit 0
     ;;
-  *)
+  "")
     list_passwords "$OTP_STORE"
+    exit 0
+    ;;
+  *)
+    text "$RED" "Error: Invalid command $1" >&2
+    usage_otp
     exit 0
     ;;
   esac
