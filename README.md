@@ -72,6 +72,7 @@ Commands:
   recuva <pass-name>       Use nano to manage recovery keys
   rm, remove [-f] <pass-name>
                            Remove a OTP entry
+  rm-recuva                Remove Recovery Key
   version                  Display the current version number
 
 Examples:
