@@ -1,25 +1,23 @@
 <img src="https://git.disroot.org/janpstrunn/images/raw/branch/main/pass.png" align="right" height="100"/>
 <br>
 
-# pass-otp: A modern CLI OTP manager
+# pass-otp: A CLI OTP Manager
 
-`pass-otp` is a simple password manager for OTP passwords written in shell, meant to be used alongside [pass](https://github.com/janpstrunn/pass) which tries to replace the [passwordstore](https://www.passwordstore.org/) keeping its core philosophies.
-
-It's a CLI tool that tries to make the process of managing one time passwords (OTP) and recovery keys a breeze while keeping yourself secure with good security standards.
+`pass-otp` is a sophisticated one-time password (OTP) manager designed to complement [pass](https://github.com/janpstrunn/pass), which aims to replace the [passwordstore](https://www.passwordstore.org/) while maintaining its core principles. Crafted in shell, `pass-otp` streamlines the management of OTPs and recovery keys, ensuring robust security standards.
 
 ## Features
 
-- List all files in a tree format using `tree` or `eza`
-- Find files using `find` or `fd`
-- Interactive password selection using `fzf`
-- Import OTP keys from [passwordstore](https://www.passwordstore.org/)
-- Output OTP to `stdout`
-- Copy OTP to clipboard and clear clipboard on specified time
-- Run post commands after clipboard clear
-- Use `zenity` to insert passwords
-- Specify a dialog tool to get master password and PIN
-- Edit OTP using `nano`
-- Manage recovery keys
+- **Tree View**: List all files in a tree format using `tree` or `eza`.
+- **File Search**: Find files effortlessly using `find` or `fd`.
+- **Interactive Selection**: Use `fzf` for interactive password selection.
+- **Seamless Import**: Import OTP keys from [passwordstore](https://www.passwordstore.org/).
+- **Output Management**: Output OTPs directly to `stdout`.
+- **Clipboard Management**: Copy OTPs to the clipboard and clear them after a specified time.
+- **Post-Clipboard Commands**: Execute commands after clipboard clearance.
+- **Graphical Input**: Use `zenity` for inserting passwords.
+- **Dialog Customization**: Specify a dialog tool to get the master password and PIN.
+- **OTP Editing**: Edit OTPs using `nano`.
+- **Recovery Key Management**: Manage recovery keys efficiently.
 
 ## Requirements
 
@@ -27,11 +25,12 @@ It's a CLI tool that tries to make the process of managing one time passwords (O
 
 ## Installation
 
-```
+```bash
 curl -sSL https://github.com/janpstrunn/pass-otp/raw/main/install.sh | bash
 ```
 
 ## Usage
+
 
 ```
   ---------------------------------------------------
@@ -80,24 +79,23 @@ Examples:
   pass-otp clip MyService
   pass-otp list
 ```
-
 > [!IMPORTANT]
-> First time running `pass-otp`, requires to use setup your [pass](https://github.com/janpstrunn/pass) first.
+> First-time users must set up [pass](https://github.com/janpstrunn/pass) before using `pass-otp`.
 
 ## Importing from passwordstore
 
-For those who what to import OTP from `passwordstore`, you can simply run the following command:
+To import OTPs from `passwordstore`, simply run:
 
 ```bash
 ./pass-otp import
 ```
 
-If `$PASSWORD_STORE_DIR` is not defined in your `.env` file, you can use the `-f` flag to set it to default.
+If `$PASSWORD_STORE_DIR` is not defined in your `.env` file, use the `-f` flag to set it to the default directory.
 
 ## Notes
 
-This script has been only tested in a Linux Machine.
+This script has been tested exclusively on a Linux machine.
 
 ## License
 
-This repository is licensed under the MIT License, a very permissive license that allows you to use, modify, copy, distribute and more.
+This repository is licensed under the MIT License, allowing for extensive use, modification, copying, and distribution.
